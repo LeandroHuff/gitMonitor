@@ -257,7 +257,7 @@ function gitUpdate()
         then
             logD "Detected target branch ${targetBranch} changes."
             uptodate=false
-            printf -v string "🗘 %s\t\t %s %s%s%s%s%s%s%s%s%s%s on %s at %s" \
+            printf -v string "🗘 %s\t\t %s\t%s%s%s%s%s%s%s%s%s%s on %s at %s" \
             "${repository}" \
             "${targetBranch}" \
             "$([ $commits    -eq 0 ] && echo -n '' || { [ $commits -gt 0 ] && echo -n " 🡱:${commits}" || echo -n " 🡫:${commits}" ; })" \
