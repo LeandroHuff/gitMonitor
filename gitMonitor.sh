@@ -213,23 +213,8 @@ function gitUpdate()
                 gitFetch || { errNo=$((errNo|1)) ; logE "gitFetch()" ; }
                 # git pull
                 gitPull || { errNo=$((errNo|2)) ; logE "gitPull()" ; }
-                if [ $errNo -eq 0 ]
-                then
-                    break
-                else
-                    if gitSetRemoteUpstream "${targetBranch}"
-                    then
-                        if gitPullRebase
-                        then
-                            :
-                        else
-                            err=7
-                            logF "gitPullRebase()"
-                            break
-                        fi
-                    else
-                        logE "gitSetRemoteUpstream()"
-                    fi
+                if [ $errNo -eq 0 ] ; then break
+                else if gitSetRemoteUpstream "${targetBranch}" ; then break ; else logE "gitSetRemoteUpstream()" ; fi
                 fi
                 errNo=0
             done
