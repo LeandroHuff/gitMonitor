@@ -257,7 +257,7 @@ function gitUpdate()
         then
             logD "Detected target branch ${targetBranch} changes."
             uptodate=false
-            printf -v string "🗘 %s\t\t %s\t%s%s%s%s%s%s%s%s%s%s on %s at %s" \
+            printf -v string "🗘 %s\t\t %s%s%s%s%s%s%s%s%s%s%s on %s at %s" \
             "${repository}" \
             "${targetBranch}" \
             "$([ $commits    -eq 0 ] && echo -n '' || { [ $commits -gt 0 ] && echo -n " 🡱:${commits}" || echo -n " 🡫:${commits}" ; })" \
@@ -316,12 +316,12 @@ function gitUpdate()
         # up to date message
         if $uptodate
         then
-            logI "🗘 ${repository}\t\t ${targetBranch}\t🗸"
+            logI "🗘 ${repository}\t\t ${targetBranch} 🗸"
         elif [ $err -eq 0 ]
         then
             # success message
-            logS "🗘 ${repository}\t\t ${targetBranch}\t🗸"
-            notify-send -a "$scriptBASENAME" -u normal -t 5 --icon="${iconSUCCESS}" "🗘 ${repository}   ${targetBranch}"
+            logS "🗘 ${repository}\t\t ${targetBranch} 🗸"
+            notify-send -a "$scriptBASENAME" -u normal -t 5 --icon="${iconSUCCESS}" "🗘 ${repository}   ${targetBranch} 🗸"
         fi
     done
     if ! isBranchCurrent "${currentBranch}"
