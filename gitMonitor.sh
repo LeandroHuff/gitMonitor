@@ -167,7 +167,7 @@ function gitUpdate()
     local run=true
     local runPush=false
     local uptodate=true
-    local res repository added modified deleted copied renamed tfmodified untracked unmerged commits
+    local res repository added modified deleted copied renamed tfmodified untracked unmerged commits ignored
     declare -i errNo=0
     declare -i err=0
     declare -i count
@@ -186,14 +186,13 @@ function gitUpdate()
         repository="$(gitRepositoryName)"
         # get current Branch name
         currentBranch=$(gitBranchName)
-        # create AutoUpdate branch if it not exist
-        if ! existBranch "${targetBranch}"
+        # check AutoUpdate branch if it exist
+        if existBranch "${targetBranch}"
         then
-            logD "Target branch ${targetBranch} not exist yet."
-            if ! isConnected ; then { err=3 ; break ; } ; fi
-            createBranch "${targetBranch}" || { err=4 ; logF "Could not create new branch ${targetBranch}" ; break ; }
-        else
             logD "Branch ${targetBranch} already exist."
+        else
+            logF "Target branch ${targetBranch} not exist yet, it should be created."
+            break
         fi
         # switch to Branch
         if ! isBranchCurrent "${targetBranch}"
@@ -201,7 +200,7 @@ function gitUpdate()
             logD "Target branch ${targetBranch} is not current yet."
             gitSwitch "${targetBranch}" || { err=5 ; logF "Could not switch to branch ${targetBranch}" ; break ; }
         fi
-        if ! isBranchCurrent "${targetBranch}" ; then { err=6 ; logF "Could not create|switch to branch ${targetBranch}" ; break ; } ; fi
+        if ! isBranchCurrent "${targetBranch}" ; then { err=6 ; logF "Could not switch to branch ${targetBranch}" ; break ; } ; fi
         # get remote data and update local branch
         if isConnected && isBranchBehind
         then
@@ -243,7 +242,8 @@ function gitUpdate()
         renamed=$(gitCountChanges 'R')
         tfmodified=$(gitCountChanges 'T')
         unmerged=$(gitCountChanges 'U')
-        untracked=$(gitCountUntracked)
+        untracked=$(gitCountChanges '\?')
+        ignored=$(gitCountChanges '\!')
         # check all counters for changes
         if [ $added      -gt 0 ] || \
            [ $modified   -gt 0 ] || \
@@ -252,14 +252,15 @@ function gitUpdate()
            [ $renamed    -gt 0 ] || \
            [ $tfmodified -gt 0 ] || \
            [ $unmerged   -gt 0 ] || \
-           [ $untracked  -gt 0 ]
+           [ $untracked  -gt 0 ] || \
+           [ $ignored    -gt 0 ]
         then
             logD "Detected target branch ${targetBranch} changes."
             uptodate=false
-            printf -v string "%s\t%s\t%s%s%s%s%s%s%s%s%s on %s at %s" \
+            printf -v string "🗘 %s   %s %s%s%s%s%s%s%s%s%s%s on %s at %s" \
             "${repository}" \
             "${targetBranch}" \
-            "$([ $commits    -le 0 ] && echo -n '' || echo -n " 🡱:${commits}")" \
+            "$([ $commits    -eq 0 ] && echo -n '' || { [ $commits -gt 0 ] && echo -n " 🡱:${commits}" || echo -n " 🡫:${commits}" ; })" \
             "$([ $added      -eq 0 ] && echo -n '' || echo -n " A:${added}")" \
             "$([ $copied     -eq 0 ] && echo -n '' || echo -n " C:${copied}")" \
             "$([ $deleted    -eq 0 ] && echo -n '' || echo -n " D:${deleted}")" \
@@ -268,6 +269,7 @@ function gitUpdate()
             "$([ $tfmodified -eq 0 ] && echo -n '' || echo -n " T:${tfmodified}")" \
             "$([ $unmerged   -eq 0 ] && echo -n '' || echo -n " U:${unmerged}")" \
             "$([ $untracked  -eq 0 ] && echo -n '' || echo -n " ?:${untracked}")" \
+            "$([ $ignored    -eq 0 ] && echo -n '' || echo -n " !:${ignored}")" \
             "$(getDate)" \
             "$(getTime)"
             logI "$string"
@@ -314,11 +316,11 @@ function gitUpdate()
         # up to date message
         if $uptodate
         then
-            logI "${repository}\t\t${targetBranch}\t 🗸"
+            logI "🗘 ${repository}\t\t ${targetBranch}\t🗸"
         elif [ $err -eq 0 ]
         then
             # success message
-            logS "${repository}\t\t${targetBranch}\t 🗸"
+            logS "🗘 ${repository}\t\t ${targetBranch}\t🗸"
             notify-send -a "$scriptBASENAME" -u normal -t 5 --icon="${iconSUCCESS}" "Rep.:${repository} Branch:${targetBranch}"
         fi
     done
@@ -461,6 +463,7 @@ libInit -v -l 3    || _exit 1
 logBegin           || _exit 1
 
 source libConfig.sh || _exit 1
+source libGit.sh    || _exit 1
 
 main "$@"
 _exit $?
