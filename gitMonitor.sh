@@ -321,7 +321,7 @@ function gitUpdate()
         then
             # success message
             logS "🗘 ${repository}\t\t ${targetBranch}\t🗸"
-            notify-send -a "$scriptBASENAME" -u normal -t 5 --icon="${iconSUCCESS}" "Rep.:${repository} Branch:${targetBranch}"
+            notify-send -a "$scriptBASENAME" -u normal -t 5 --icon="${iconSUCCESS}" "🗘 ${repository}   ${targetBranch}"
         fi
     done
     if ! isBranchCurrent "${currentBranch}"
@@ -334,7 +334,7 @@ function gitUpdate()
     if [ $err -ne 0 ]
     then
         logE "${string}"
-        notify-send -a "$scriptBASENAME" -u normal -t 10 --icon="$iconFAIL" "Rep.:${repository} Branch:${targetBranch} Error:${err}"
+        notify-send -a "$scriptBASENAME" -u normal -t 10 --icon="$iconFAIL" "🗘 ${repository}   ${targetBranch} Error:${err}"
     fi
     # return an error code.
     return $err
