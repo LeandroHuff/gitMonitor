@@ -1,6 +1,6 @@
 # gitMonitor - Git Repository Monitor
 
-The gitRepositoryMonitor is a shell script program that can run as a daemon service on Linux run in a terminal an monitor git changes to automate updates by interval times.
+The gitRepositoryMonitor is a shell script program that monitor git changes to automate updates by interval times.
 
 The purpose for this  is to automate the update procedures to let the local repositories up to date with remote github repositories.
 
