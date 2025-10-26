@@ -118,7 +118,7 @@ function main()
                         "$([ $ignored    -eq 0 ] && echo -n '' || echo -n " !:${ignored}")" \
                         "$(getDate)" \
                         "$(getTime)"
-                        logI "Update $string"
+                        logIt "\033[37m update\033[0m: $string"
                         gitAdd '.' || logE "gitAdd('.') return code:$?"
                         gitCommitSigned "${string}" || logE "gitCommit() return code:$?"
                         if isBranchBehind ; then
