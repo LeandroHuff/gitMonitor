@@ -27,17 +27,11 @@ function _exit()
     logD "Exit code ($code)"
     logR
     logEnd
-    libStop
+    logStop
     local len=${#libLOADED[@]}
     for ((index=0 ; index < $len ; index++))
     do
-        $(lib${libLOADED[$index]}Exit)
-        if [ $? -eq 0 ]
-        then
-            logOk "Unload lib${libLOADED[$index]}.sh"
-        else
-            logFail "Unload lib${libLOADED[$index]}.sh"
-        fi
+        $(lib${libLOADED[$index]}Exit) || logFail "Unload lib${libLOADED[$index]}.sh"
     done
     unsetVars
     exit $code
@@ -59,7 +53,7 @@ function main()
 
     local sleepTIME=300
     local sleepNOCONN=60
-    local counter=0
+    local counter=1
     local path="/var/home/$USER/dev"
 
     while [ $run ] ; do
@@ -127,7 +121,7 @@ function main()
                         "$([ $ignored    -eq 0 ] && echo -n '' || echo -n " !:${ignored}")" \
                         "$(getDate)" \
                         "$(getTime)"
-                        logI "$string"
+                        logI "Update $string"
                         gitAdd '.' || logE "gitAdd('.') return code:$?"
                         gitCommitSigned "${string}" || logE "gitCommit() return code:$?"
                         if isBranchBehind ; then
@@ -141,8 +135,9 @@ function main()
                 counter=$sleepNOCONN
             fi
         fi
-        logNLF "Wait ${counter}/s"
-        sleep 1.0
+        logNLF "Wait ${counter}s"
+        sleep 1
+        counter=$((counter-1))
     done
 
     # Reset Libs
@@ -163,7 +158,6 @@ do
         if [ $? -eq 0 ]
         then
             libLOADED+=(${libLIST[$index]})
-            logOk "Load lib${libLIST[$index]}.sh"
         else
             logFail "Load lib${libLIST[$index]}.sh"
         fi
