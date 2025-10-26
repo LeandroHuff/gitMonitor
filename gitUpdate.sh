@@ -106,7 +106,7 @@ function main()
                        [ $untracked  -gt 0 ] || \
                        [ $ignored    -gt 0 ]
                     then
-                        printf -v string "🗘 %s\t\t %s%s%s%s%s%s%s%s%s%s%s on %s at %s" \
+                        printf -v string "🗘 %s -  %s%s%s%s%s%s%s%s%s%s%s on %s at %s" \
                         "${repository}" \
                         "${targetBranch}" \
                         "$([ $commits    -eq 0 ] && echo -n '' || { [ $commits -gt 0 ] && echo -n " 🡱:${commits}" || echo -n " 🡫:${commits}" ; })" \
