@@ -1,1 +1,0 @@
-/var/home/leandro/dev/libShell/libGit.sh

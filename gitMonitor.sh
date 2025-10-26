@@ -14,34 +14,36 @@
 #               github repositories.                                           #
 ################################################################################
 
-declare -r scriptFILENAME="$(basename "$0")"
-declare -r scriptNAME="${scriptFILENAME%.*}"
+declare scriptFILENAME="$(basename "$0")"
+declare scriptNAME="${scriptFILENAME%.*}"
+declare -a libLIST=(Config Conn EscCodes File Git Log Math Random Regex Shell String)
+declare -a libLOADED=()
 
 ## @brief   Version number.
-declare -a -i -r VERSION=(3 2 1)
+declare -a -i VERSION=(3 2 1)
 
 ## @Var     List of index variables for configuration tables.
-declare -i -r iFILE=0
-declare -i -r iUSER_DIR=1
-declare -i -r iDEV_DIR=2
-declare -i -r iMONITOR_DIR=3
-declare -i -r iICON_FAILURE=4
-declare -i -r iICON_SUCCESS=5
-declare -i -r iGIT_LIST=6
-declare -i -r iSLEEP=7
-declare -i -r iSLEEP_LOST_CONN=8
-declare -i -r iLOG_TARGET=9
-declare -i -r iLOG_LEVEL=10
-declare -i -r iMAX=11
+declare -i iFILE=0
+declare -i iUSER_DIR=1
+declare -i iDEV_DIR=2
+declare -i iMONITOR_DIR=3
+declare -i iICON_FAILURE=4
+declare -i iICON_SUCCESS=5
+declare -i iGIT_LIST=6
+declare -i iSLEEP=7
+declare -i iSLEEP_LOST_CONN=8
+declare -i iLOG_TARGET=9
+declare -i iLOG_LEVEL=10
+declare -i iMAX=11
 
 ## @var tableTAG    Table of configuration tags.
-declare -a -r tableTAG=(\
+declare -a tableTAG=(\
 FILE USER_DIR DEV_DIR MONITOR_DIR ICON_FAILURE \
 ICON_SUCCESS GIT_LIST SLEEP SLEEP_LOST_CONN LOG_TARGET \
 LOG_LEVEL)
 
 ## @var tableDEFAULT    Table of default configuration values.
-declare -a -r tableDEFAULT=(\
+declare -a tableDEFAULT=(\
 $scriptNAME.cfg \
 \$HOME \
 dev \
@@ -69,6 +71,12 @@ iconSUCCESS=''
 ## @var tableCONFIG     Table of user configuration values.
 declare -a tableCONFIG=()
 
+# Print failure messages on terminal.
+function logFail() { echo -e "\033[31mfailure\033[0m: $*" ; }
+
+# Print success messages on terminal.
+function logOk() { echo -e "\033[37msuccess\033[0m: $*" ; }
+
 ##
 # @brief    Unset global varuables
 # @param    none
@@ -76,13 +84,27 @@ declare -a tableCONFIG=()
 #           1..N    Error code.
 function unsetVars()
 {
-    unset -v tableCONFIG
-    unset -v err
-    unset -v run
-    unset -v key
-    unset -v counter
-    unset -v wait
-    unset -v repositoryName
+    unset -v scriptFILENAME
+    unset -v scriptNAME
+    unset -v libLIST
+    unset -v libLOADED
+    unset -v VERSION
+    unset -v iFILE
+    unset -v iUSER_DIR
+    unset -v iDEV_DIR
+    unset -v iMONITOR_DIR
+    unset -v iICON_FAILURE
+    unset -v iICON_SUCCESS
+    unset -v iGIT_LIST
+    unset -v iSLEEP
+    unset -v iSLEEP_LOST_CONN
+    unset -v iLOG_TARGET
+    unset -v iLOG_LEVEL
+    unset -v iMAX
+    unset -v tableTAG
+    unset -v tableDEFAULT
+    unset -v configFILE
+    unset -v currentDIR
     unset -v userDIR
     unset -v devDIR
     unset -v monitorDIR
@@ -91,9 +113,13 @@ function unsetVars()
     unset -v sleepTIME_LOST_CONN
     unset -v iconFAIL
     unset -v iconSUCCESS
-    unset -v scriptFilename
-    unset -v scriptName
-    unset -v configFile
+    unset -v tableCONFIG
+
+    unset -f _help
+    unset -f _exit
+    unset -f unsetVars
+    unset -f gitUpdate
+    unset -f main
     return 0
 }
 
@@ -109,6 +135,17 @@ function _exit()
     logR
     logEnd
     libStop
+    local len=${#libLOADED[@]}
+    for ((index=0 ; index < $len ; index++))
+    do
+        $(lib${libLOADED[$index]}Exit)
+        if [ $? -eq 0 ]
+        then
+            logOk "Unload lib${libLOADED[$index]}.sh"
+        else
+            logFail "Unload lib${libLOADED[$index]}.sh"
+        fi
+    done
     unsetVars
     exit $code
 }
@@ -178,10 +215,10 @@ function gitUpdate()
         if ! isGitRepository "${devDIR}/${repo}"
         then
             err=1
-            logE "${devDIR}/${repo} is NOT a Git Repository."
+            logE "Folder ${devDIR}/${repo} is NOT a Git Repository."
             break
         fi
-        cd "${devDIR}/${repo}" || { err=2 ; logF "Could not move into dir ("${devDIR}/${repo}")" ; break ; }
+        cd "${devDIR}/${repo}" || { err=$? ; logF "Move to dir ${devDIR}/${repo} return code:$err" ; break ; }
         # get Repository name
         repository="$(gitRepositoryName)"
         # get current Branch name
@@ -197,10 +234,10 @@ function gitUpdate()
         # switch to Branch
         if ! isBranchCurrent "${targetBranch}"
         then
-            logD "Target branch ${targetBranch} is not current yet."
-            gitSwitch "${targetBranch}" || { err=5 ; logF "Could not switch to branch ${targetBranch}" ; break ; }
+            logD "Target branch ${targetBranch} is not current."
+            gitSwitch "${targetBranch}" || { err=$? ; logF "Switch to branch ${targetBranch} return code:$err" ; break ; }
         fi
-        if ! isBranchCurrent "${targetBranch}" ; then { err=6 ; logF "Could not switch to branch ${targetBranch}" ; break ; } ; fi
+        if ! isBranchCurrent "${targetBranch}" ; then { err=$? ; logF "Switch to branch ${targetBranch} return code:$err" ; break ; } ; fi
         # get remote data and update local branch
         if isConnected && isBranchBehind
         then
@@ -210,11 +247,11 @@ function gitUpdate()
             for ((count=1 ; count <= 3; count++))
             do
                 # git fetch
-                gitFetch || { errNo=$((errNo|1)) ; logE "gitFetch()" ; }
+                gitFetch || { errNo=$? ; logE "gitFetch() return code:$errNo" ; }
                 # git pull
-                gitPull || { errNo=$((errNo|2)) ; logE "gitPull()" ; }
+                gitPull || { errNo=$? ; logE "gitPull() return code:$errNo" ; }
                 if [ $errNo -eq 0 ] ; then break
-                else if gitSetRemoteUpstream "${targetBranch}" ; then break ; else logE "gitSetRemoteUpstream()" ; fi
+                else if gitSetRemoteUpstream "${targetBranch}" ; then break ; else err=$? ; logE "gitSetRemoteUpstream() return code:$err" ; fi
                 fi
                 errNo=0
             done
@@ -259,9 +296,9 @@ function gitUpdate()
             "$(getTime)"
             logI "$string"
             # git add .
-            gitAdd '.' || { err=8 ; logF "gitAdd('.')" ; break ; }
+            gitAdd '.' || { err=$? ; logF "gitAdd('.') return code:$err" ; break ; }
             # git commit -m "message"
-            gitCommitSigned "${string}" || { err=9 ; logF "gitCommit(\"${string}\") failed." ; break ; }
+            gitCommitSigned "${string}" || { err=$? ; logF "gitCommit( ${string} ) return code: $err." ; break ; }
             runPush=true
         fi
         # push only if connected to internet
@@ -279,18 +316,20 @@ function gitUpdate()
                     then
                         break
                     else
-                        logE "gitPush()"
+                        errNo=$?
+                        logE "gitPush() return code:$errNo"
                         if gitSetRemoteUpstream "${targetBranch}"
                         then
                             :
                         else
-                            logE "gitSetRemoteUpstream( ${targetBranch} )"
+                            errNo=$?
+                            logE "gitSetRemoteUpstream( ${targetBranch} ) return code:$errNo"
                             if gitPullRebase
                             then
                                 :
                             else
-                                err=10
-                                logF "gitPullRebase()"
+                                err=$?
+                                logF "gitPullRebase() return code:$err"
                                 break
                             fi
                         fi
@@ -319,7 +358,7 @@ function gitUpdate()
     if [ $err -ne 0 ]
     then
         logE "${string}"
-        notify-send -a "$scriptBASENAME" -u normal -t 10 --icon="$iconFAIL" "🗘 ${repository}   ${targetBranch} Error:${err}"
+        notify-send -a "$scriptBASENAME" -u normal -t 10 --icon="$iconFAIL" "🗘 ${repository}   ${targetBranch} code:${err}"
     fi
     # return an error code.
     return $err
@@ -335,6 +374,12 @@ function main()
     local err=0
     local run=true
     declare configFILE="${tableDEFAULT[$iFILE]}"
+
+    # Setup Libs
+    logInit -l 1 -g -v
+    logSetup -l 3
+    logBegin
+    libShellSetup -t 5
 
     if [ $# -gt 0 ]
     then
@@ -358,7 +403,7 @@ function main()
                         _exit 1
                     fi
                     ;;
-                --) shift ; libSetup "$@" || _exit 1 ;;
+                --) shift ; logSetup "$@" || _exit 1 ;;
                 *) logF "Unknown option ( $1 )." ; _exit 1 ;;
             esac
             shift
@@ -377,7 +422,7 @@ function main()
     iconFAIL="${monitorDIR}/${tableCONFIG[$iICON_FAILURE]}"
     iconSUCCESS="${monitorDIR}/${tableCONFIG[$iICON_SUCCESS]}"
 
-    libSetup ${tableCONFIG[$iLOG_LEVEL]} -l ${tableCONFIG[$iLOG_TARGET]}
+    logSetup ${tableCONFIG[$iLOG_LEVEL]} -l ${tableCONFIG[$iLOG_TARGET]}
 
     logD "-----------------------------------------------"
     logD "Variables:"
@@ -440,15 +485,33 @@ function main()
         sleep 1
         counter=$((counter-1))
     done
+
+    # Reset Libs
+    logEnd
+    logStop
+
     return 0
 }
 
-source libShell.sh || exit 1
-libInit -v -l 3    || _exit 1
-logBegin           || _exit 1
-
-source libConfig.sh || _exit 1
-source libGit.sh    || _exit 1
+# Load Libs
+len=${#libLIST[@]}
+path="/var/home/$USER/dev/libShell"
+for ((index=0 ; index < $len ; index++))
+do
+    if [ -f "${path}/lib${libLIST[$index]}.sh" ] && [[ "lib${libLIST[$index]}.sh" != "$(basename "$0")" ]]
+    then
+        source "${path}/lib${libLIST[$index]}.sh"
+        if [ $? -eq 0 ]
+        then
+            libLOADED+=(${libLIST[$index]})
+            logOk "Load lib${libLIST[$index]}.sh"
+        else
+            logFail "Load lib${libLIST[$index]}.sh"
+        fi
+    else
+        logFail "File lib${libLIST[$index]}.sh not found."
+    fi
+done
 
 main "$@"
 _exit $?
