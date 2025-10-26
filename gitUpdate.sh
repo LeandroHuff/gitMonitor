@@ -52,7 +52,7 @@ function main()
 
     local sleepTIME=300
     local sleepNOCONN=60
-    local counter=1
+    local counter=5
     local path="/var/home/$USER/dev"
     logI "Press [Q] or [q] to exit from program."
     while [ $run ] ; do
