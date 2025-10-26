@@ -40,7 +40,8 @@ function _exit()
 function main()
 {
     local len=0
-    local branch='AutoUpdate'
+    local currentBranch=''
+    local targetBranch='AutoUpdate'
     local string=''
     local run=true
     local res repository added modified deleted copied renamed tfmodified untracked unmerged commits ignored
