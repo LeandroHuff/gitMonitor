@@ -54,7 +54,7 @@ function main()
     local sleepNOCONN=60
     local counter=1
     local path="/var/home/$USER/dev"
-
+    logI "Press key [Q|q] to exit from program."
     while [ $run ] ; do
         if key=$(getChar) && [[ "$key" == 'q' || "$key" == 'Q' ]] ; then
             echo
