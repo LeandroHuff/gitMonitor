@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-declare -a -i VERSION=(1 0 0)
 declare -a libLIST=(Config Conn EscCodes File Git Log Math Random Regex Shell String)
 declare -a libLOADED=()
+declare -i listLEN=${#libLIST[@]}
+declare    libPATH="/var/home/$USER/dev/libShell"
 
 function logFail() { echo -e "\033[31mfailure\033[0m: $*" ; }
-function logOk()   { echo -e "\033[37msuccess\033[0m: $*" ; }
 
 function unsetVars()
 {
@@ -13,8 +13,8 @@ function unsetVars()
     unset -v libLOADED
     unset -v VERSION
 
+    unset -f logFail
     unset -f _help
-    unset -f gitUpdate
     unset -f main
     unset -f unsetVars
     unset -f _exit
@@ -24,13 +24,10 @@ function unsetVars()
 function _exit()
 {
     local code=$( [ -n "$1" ] && echo $1 || echo 0 )
-    logD "Exit code ($code)"
     logR
     logEnd
     logStop
-    local len=${#libLOADED[@]}
-    for ((index=0 ; index < $len ; index++))
-    do
+    for ((index=0 ; index < $listLEN ; index++)) ; do
         $(lib${libLOADED[$index]}Exit) || logFail "Unload lib${libLOADED[$index]}.sh"
     done
     unsetVars
@@ -105,9 +102,8 @@ function main()
                        [ $tfmodified -gt 0 ] || \
                        [ $unmerged   -gt 0 ] || \
                        [ $untracked  -gt 0 ] || \
-                       [ $ignored    -gt 0 ]
-                    then
-                        printf -v string "🗘 %s -  %s%s%s%s%s%s%s%s%s%s%s on %s at %s" \
+                       [ $ignored    -gt 0 ] ; then
+                        printf -v string "🗘 %s   %s%s%s%s%s%s%s%s%s%s%s on %s at %s" \
                         "${repository}" \
                         "${targetBranch}" \
                         "$([ $commits    -eq 0 ] && echo -n '' || { [ $commits -gt 0 ] && echo -n " 🡱:${commits}" || echo -n " 🡫:${commits}" ; })" \
@@ -149,15 +145,10 @@ function main()
 }
 
 # Load Libs
-len=${#libLIST[@]}
-path="/var/home/$USER/dev/libShell"
-for ((index=0 ; index < $len ; index++))
-do
-    if [ -f "${path}/lib${libLIST[$index]}.sh" ] && [[ "lib${libLIST[$index]}.sh" != "$(basename "$0")" ]]
-    then
-        source "${path}/lib${libLIST[$index]}.sh"
-        if [ $? -eq 0 ]
-        then
+for ((index=0 ; index < $listLEN ; index++)) ; do
+    if [ -f "${libPATH}/lib${libLIST[$index]}.sh" ] && [[ "lib${libLIST[$index]}.sh" != "$(basename "$0")" ]] ; then
+        source "${libPATH}/lib${libLIST[$index]}.sh"
+        if [ $? -eq 0 ] ; then
             libLOADED+=(${libLIST[$index]})
         else
             logFail "Load lib${libLIST[$index]}.sh"
@@ -167,5 +158,8 @@ do
     fi
 done
 
+# Call main()
 main "$@"
+
+# Call _exit()
 _exit $?
