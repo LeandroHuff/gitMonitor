@@ -172,7 +172,7 @@ function main()
             logI 'Press [U] or [u] to start update.'
         fi
         printf -v string "Next Update: %4ds" ${counter}
-        logNLF "Next Update: ${counter}s"
+        logNLF "${string}"
         sleep 1
         counter=$((counter-1))
     done
