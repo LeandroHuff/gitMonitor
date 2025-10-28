@@ -135,11 +135,11 @@ function main()
                         fi
                         gitPush || logE "gitPush() returned code:$?"
                     else
-                        logD "Repository ${repository} is up to date."
+                        logI "🗘 ${repository}  ${targetBranch} is up to date."
                     fi
                 done
             else
-                logD 'No internet connection available.'
+                logW 'No internet connection available.'
                 counter=$sleepNOCONN
             fi
         fi
