@@ -135,7 +135,7 @@ function main()
                         fi
                         gitPush || logE "gitPush() returned code:$?"
                     else
-                        logI "🗘 ${repository}  ${targetBranch} is up to date."
+                        logI "🗘 ${repository}\t ${targetBranch} is up to date."
                     fi
                 done
             else
