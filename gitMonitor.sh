@@ -4,8 +4,10 @@ declare -a libLIST=(Config Conn EscCodes File Git Log Math Random Regex Shell St
 declare -a libLOADED=()
 declare -i listLEN=${#libLIST[@]}
 declare    libPATH="/var/home/$USER/dev/libShell"
+declare    DEBUG=0
 
 function logFail() { echo -e "\033[31mfailure\033[0m: $*" ; }
+function logDebug() { [ $DEBUG -eq 0 ] || echo -e "\033[32m  debug\033[0m: $*" ; }
 
 function unsetVars()
 {
@@ -54,19 +56,22 @@ function main()
     local sleepNOCONN=60
     local counter=5
     local path="/var/home/$USER/dev"
-    logI "Press [Q] or [q] to exit from program."
+    logI 'Press [Q] or [q] to exit from program.'
     while [ $run ] ; do
         if key=$(getChar) && [[ "$key" == 'q' || "$key" == 'Q' ]] ; then
             echo
+            logD 'Key [Q] or [q] has been pressed, getting out.'
             run=false
             break
         fi
         if [ $counter -le 0 ] ; then
             echo
             if isConnected ; then
+                logD 'Starting update repositories.'
                 counter=$sleepTIME
                 len=${#list[@]}
                 for ((index=0 ; index < $len ; index++)) ; do
+                    logD "Repository from list: ${list[$index]}"
                     if [ -d "${path}/${list[$index]}" ] ; then
                         cd "${path}/${list[$index]}"
                         if [ $? -ne 0 ] ; then
@@ -75,8 +80,10 @@ function main()
                         fi
                     fi
                     repository="$(gitRepositoryName)"
+                    logD "Repository Name: ${repository}"
                     currentBranch=$(gitBranchName)
                     if ! isBranchCurrent "${targetBranch}" ; then
+                        logD "Switching to target branch: ${targetBranch}"
                         gitSwitch "${targetBranch}"
                         if [ $? -ne 0 ] ; then
                             logF "Switch to branch ${targetBranch} return code:$?"
@@ -127,9 +134,12 @@ function main()
                             gitPull  || logE "gitPull() return code:$?"
                         fi
                         gitPush || logE "gitPush() returned code:$?"
+                    else
+                        logD "Repository ${repository} is up to date."
                     fi
                 done
             else
+                logD 'No internet connection available.'
                 counter=$sleepNOCONN
             fi
         fi
@@ -145,17 +155,30 @@ function main()
     return 0
 }
 
+declare -i len=$#
+declare -a args=("$@")
+for ((index=0 ; index < $len ; index++))
+do
+    if [ "${args[$index]}" = '-g' ]
+    then
+        DEBUG=1
+    fi
+done
+
 # Load Libs
 for ((index=0 ; index < $listLEN ; index++)) ; do
     if [ -f "${libPATH}/lib${libLIST[$index]}.sh" ] && [[ "lib${libLIST[$index]}.sh" != "$(basename "$0")" ]] ; then
         source "${libPATH}/lib${libLIST[$index]}.sh"
-        if [ $? -eq 0 ] ; then
+        err=$?
+        if [ $err -eq 0 ] ; then
+            logDebug "Load ${libPATH}/lib${libLIST[$index]}.sh"
             libLOADED+=(${libLIST[$index]})
         else
-            logFail "Load lib${libLIST[$index]}.sh"
+            logFail "Load ${libPATH}/lib${libLIST[$index]}.sh"
+            _exit 1
         fi
     else
-        logFail "File lib${libLIST[$index]}.sh not found."
+        logFail "File ${libPATH}/lib${libLIST[$index]}.sh not found."
     fi
 done
 
