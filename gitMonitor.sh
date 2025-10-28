@@ -2,20 +2,23 @@
 
 declare -a libLIST=(Config Conn EscCodes File Git Log Math Random Regex Shell String)
 declare -a libLOADED=()
-declare -i listLEN=${#libLIST[@]}
 declare    libPATH="/var/home/$USER/dev/libShell"
 declare    DEBUG=0
+declare -i LEN=0
+declare -i INDEX=0
+declare -a ARGS=()
 
 function logFail() { echo -e "\033[31mfailure\033[0m: $*" ; }
 function logDebug() { [ $DEBUG -eq 0 ] || echo -e "\033[32m  debug\033[0m: $*" ; }
 
 function unsetVars()
 {
+    # Unset Variables
     unset -v libLIST
     unset -v libLOADED
     unset -v listLEN
     unset -v libPATH
-
+    # Unset Functions
     unset -f logFail
     unset -f _help
     unset -f main
@@ -30,7 +33,8 @@ function _exit()
     logR
     logEnd
     logStop
-    for ((index=0 ; index < $listLEN ; index++)) ; do
+    for ((index=0 ; index < $listLEN ; index++))
+    do
         $(lib${libLOADED[$index]}Exit) || logFail "Unload lib${libLOADED[$index]}.sh"
     done
     unsetVars
@@ -51,7 +55,6 @@ function main()
     logSetup -l 1
     logBegin
     libShellSetup -t 5
-
     # Internet connecton active intervals.
     local sleepTIME=$((60*30))
     # No internet connection active intervals.
@@ -60,30 +63,38 @@ function main()
     local path="/var/home/$USER/dev"
     logI 'Press [Q] or [q] to exit from program.'
     logI '      [U] or [u] to start update.'
-    while [ $run ] ; do
+    while [ $run ]
+    do
         key=$(getChar)
-        if [[ "$key" == 'q' || "$key" == 'Q' ]] ; then
+        if [[ "$key" == 'q' || "$key" == 'Q' ]]
+        then
             echo
             logD 'Key [Q] or [q] has been pressed, getting out.'
             run=false
             break
-        elif [[ "$key" == 'u' || "$key" == 'U' ]] ; then
+        elif [[ "$key" == 'u' || "$key" == 'U' ]]
+        then
             echo
             key=''
             logD 'Key [U] or [u] has been pressed, starting update.'
             counter=0
         fi
-        if [ $counter -le 0 ] ; then
+        if [ $counter -le 0 ]
+        then
             echo
-            if isConnected ; then
+            if isConnected
+            then
                 logD 'Starting update repositories.'
                 counter=$sleepTIME
                 len=${#list[@]}
-                for ((index=0 ; index < $len ; index++)) ; do
+                for ((index=0 ; index < $len ; index++))
+                do
                     logD "Repository from list: ${list[$index]}"
-                    if [ -d "${path}/${list[$index]}" ] ; then
+                    if [ -d "${path}/${list[$index]}" ]
+                    then
                         cd "${path}/${list[$index]}"
-                        if [ $? -ne 0 ] ; then
+                        if [ $? -ne 0 ]
+                        then
                             logF "Folder ${path}/${list[$index]} not found."
                             break
                         fi
@@ -91,10 +102,12 @@ function main()
                     repository="$(gitRepositoryName)"
                     logD "Repository Name: ${repository}"
                     currentBranch=$(gitBranchName)
-                    if ! isBranchCurrent "${targetBranch}" ; then
+                    if ! isBranchCurrent "${targetBranch}"
+                    then
                         logD "Switching to target branch: ${targetBranch}"
                         gitSwitch "${targetBranch}"
-                        if [ $? -ne 0 ] ; then
+                        if [ $? -ne 0 ]
+                        then
                             logF "Switch to branch ${targetBranch} return code:$?"
                             cd ..
                             continue
@@ -119,7 +132,8 @@ function main()
                        [ $tfmodified -gt 0 ] || \
                        [ $unmerged   -gt 0 ] || \
                        [ $untracked  -gt 0 ] || \
-                       [ $ignored    -gt 0 ] ; then
+                       [ $ignored    -gt 0 ]
+                    then
                         printf -v string "🗘 %s\t %s%s%s%s%s%s%s%s%s%s%s on %s at %s." \
                         "${repository}" \
                         "${targetBranch}" \
@@ -138,7 +152,8 @@ function main()
                         logIt "\033[37m update\033[0m: $string"
                         gitAdd '.' || logE "gitAdd('.') return code:$?"
                         gitCommitSigned "${string}" || logE "gitCommit() return code:$?"
-                        if isBranchBehind ; then
+                        if isBranchBehind
+                        then
                             gitFetch || logE "gitFetch() return code:$?"
                             gitPull  || logE "gitPull() return code:$?"
                         fi
@@ -155,7 +170,8 @@ function main()
             logI 'Press [Q] or [q] to exit from program.'
             logI 'Press [U] or [u] to start update.'
         fi
-        logNLF "Wait ${counter}s"
+        printf -v string "Next Update: %4ds" ${counter}
+        logNLF "Next Update: ${counter}s"
         sleep 1
         counter=$((counter-1))
     done
@@ -167,30 +183,34 @@ function main()
     return 0
 }
 
-declare -i len=$#
-declare -a args=("$@")
-for ((index=0 ; index < $len ; index++))
+declare -i LEN=$#
+declare -a ARGS=("$@")
+
+for ((INDEX=0 ; INDEX < LEN ; INDEX++))
 do
-    if [ "${args[$index]}" = '-g' ]
+    if [ "${ARGS[$INDEX]}" = '-g' ]
     then
         DEBUG=1
     fi
 done
 
 # Load Libs
-for ((index=0 ; index < $listLEN ; index++)) ; do
-    if [ -f "${libPATH}/lib${libLIST[$index]}.sh" ] && [[ "lib${libLIST[$index]}.sh" != "$(basename "$0")" ]] ; then
-        source "${libPATH}/lib${libLIST[$index]}.sh"
+LEN=${#libLIST[@]}
+for ((INDEX=0 ; INDEX < LEN ; INDEX++))
+do
+    if [ -f "${libPATH}/lib${libLIST[$INDEX]}.sh" ] && [[ "lib${libLIST[$INDEX]}.sh" != "$(basename "$0")" ]] ; then
+        source "${libPATH}/lib${libLIST[$INDEX]}.sh"
         err=$?
-        if [ $err -eq 0 ] ; then
-            logDebug "Load ${libPATH}/lib${libLIST[$index]}.sh"
-            libLOADED+=(${libLIST[$index]})
+        if [ $err -eq 0 ]
+        then
+            logDebug "Load ${libPATH}/lib${libLIST[$INDEX]}.sh"
+            libLOADED+=("${libLIST[$INDEX]}")
         else
-            logFail "Load ${libPATH}/lib${libLIST[$index]}.sh"
+            logFail "Load ${libPATH}/lib${libLIST[$INDEX]}.sh"
             _exit 1
         fi
     else
-        logFail "File ${libPATH}/lib${libLIST[$index]}.sh not found."
+        logFail "File ${libPATH}/lib${libLIST[$INDEX]}.sh not found."
     fi
 done
 
