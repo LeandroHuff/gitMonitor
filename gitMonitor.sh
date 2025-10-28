@@ -33,9 +33,10 @@ function _exit()
     logR
     logEnd
     logStop
-    for ((index=0 ; index < $listLEN ; index++))
+    LEN=${#libLOADED[@]}
+    for ((INDEX=0 ; INDEX < LEN ; INDEX++))
     do
-        $(lib${libLOADED[$index]}Exit) || logFail "Unload lib${libLOADED[$index]}.sh"
+        $(lib${libLOADED[$INDEX]}Exit) || logFail "Unload lib${libLOADED[$INDEX]}.sh"
     done
     unsetVars
     exit $code
