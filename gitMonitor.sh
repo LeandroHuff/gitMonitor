@@ -151,8 +151,9 @@ function main()
                 logW 'No internet connection available.'
                 counter=$sleepNOCONN
             fi
+            echo
             logI 'Press [Q] or [q] to exit from program.'
-            logI '      [U] or [u] to start update.'
+            logI 'Press [U] or [u] to start update.'
         fi
         logNLF "Wait ${counter}s"
         sleep 1
