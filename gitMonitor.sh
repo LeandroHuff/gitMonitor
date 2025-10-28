@@ -52,8 +52,10 @@ function main()
     logBegin
     libShellSetup -t 5
 
-    local sleepTIME=300
-    local sleepNOCONN=60
+    # Internet connecton active intervals.
+    local sleepTIME=$((60*30))
+    # No internet connection active intervals.
+    local sleepNOCONN=$((60*5))
     local counter=5
     local path="/var/home/$USER/dev"
     logI 'Press [Q] or [q] to exit from program.'
@@ -142,6 +144,7 @@ function main()
                 logW 'No internet connection available.'
                 counter=$sleepNOCONN
             fi
+            logI 'Press [Q] or [q] to exit from program.'
         fi
         logNLF "Wait ${counter}s"
         sleep 1
