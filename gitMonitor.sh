@@ -59,12 +59,19 @@ function main()
     local counter=5
     local path="/var/home/$USER/dev"
     logI 'Press [Q] or [q] to exit from program.'
+    logI '      [U] or [u] to start update.'
     while [ $run ] ; do
-        if key=$(getChar) && [[ "$key" == 'q' || "$key" == 'Q' ]] ; then
+        key=$(getChar)
+        if [[ "$key" == 'q' || "$key" == 'Q' ]] ; then
             echo
             logD 'Key [Q] or [q] has been pressed, getting out.'
             run=false
             break
+        elif [[ "$key" == 'u' || "$key" == 'U' ]] ; then
+            echo
+            key=''
+            logD 'Key [U] or [u] has been pressed, starting update.'
+            counter=0
         fi
         if [ $counter -le 0 ] ; then
             echo
@@ -145,6 +152,7 @@ function main()
                 counter=$sleepNOCONN
             fi
             logI 'Press [Q] or [q] to exit from program.'
+            logI '      [U] or [u] to start update.'
         fi
         logNLF "Wait ${counter}s"
         sleep 1
