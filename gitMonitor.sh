@@ -52,7 +52,7 @@ function main()
     local res repository added modified deleted copied renamed tfmodified untracked unmerged commits ignored
     local -a list=(codeTemplate daemons driverLinux gitMonitor libShell makeDoc research researchD setupLinux shellScript shellTools)
     # Setup Libs
-    logInit "$@"
+    logInit "$@" || return $?
     logBegin
     libShellSetup -t 5
     # Internet connecton active intervals.
@@ -82,6 +82,7 @@ function main()
         if [ $counter -le 0 ]
         then
             echo
+            logD "Checking internet connection."
             if isConnected
             then
                 logD 'Starting update repositories.'
@@ -204,7 +205,7 @@ done
 LEN=${#libLIST[@]}
 for ((INDEX=0 ; INDEX < LEN ; INDEX++))
 do
-    if [ -f "${libPATH}/lib${libLIST[$INDEX]}.sh" ] && [[ "lib${libLIST[$INDEX]}.sh" != "$(basename "$0")" ]] ; then
+    if [ -f "${libPATH}/lib${libLIST[$INDEX]}.sh" ] ; then
         source "${libPATH}/lib${libLIST[$INDEX]}.sh"
         err=$?
         if [ $err -eq 0 ]
