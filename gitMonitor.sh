@@ -52,8 +52,7 @@ function main()
     local res repository added modified deleted copied renamed tfmodified untracked unmerged commits ignored
     local -a list=(codeTemplate daemons driverLinux gitMonitor libShell makeDoc research researchD setupLinux shellScript shellTools)
     # Setup Libs
-    logInit -v
-    logSetup -l 1
+    logInit "$@"
     logBegin
     libShellSetup -t 5
     # Internet connecton active intervals.
