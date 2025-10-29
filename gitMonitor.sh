@@ -151,13 +151,19 @@ function main()
                         "$(getDate)" \
                         "$(getTime)"
                         logIt "\033[37m update\033[0m: $string"
+                        logD "gitAdd '.'"
                         gitAdd '.' || logE "gitAdd('.') return code:$?"
+                        logD "gitCommitSigned ${string}"
                         gitCommitSigned "${string}" || logE "gitCommit() return code:$?"
                         if isBranchBehind
                         then
+                            logD "isBranchBehind"
+                            logD "gitFetch"
                             gitFetch || logE "gitFetch() return code:$?"
+                            logD "gitPull"
                             gitPull  || logE "gitPull() return code:$?"
                         fi
+                        logD "gitPush"
                         gitPush || logE "gitPush() returned code:$?"
                     else
                         logI "🗘 ${repository}\t ${targetBranch} is up to date."
