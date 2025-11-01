@@ -149,7 +149,7 @@ function main()
                         "$([ $ignored    -eq 0 ] && echo -n '' || echo -n " !:${ignored}")" \
                         "$(getDate)" \
                         "$(getTime)"
-                        logIt "\033[37m update\033[0m: $string"
+                        logI "\033[37m update\033[0m: $string"
                         logD "gitAdd '.'"
                         gitAdd '.' || logE "gitAdd('.') return code:$?"
                         logD "gitCommitSigned ${string}"
