@@ -29,7 +29,6 @@ function _exit()
 {
     local code=$( [ -n "$1" ] && echo $1 || echo 0 )
     logR
-    logEnd
     logStop
     LEN=${#libLOADED[@]}
     for ((INDEX=0 ; INDEX < LEN ; INDEX++))
@@ -51,7 +50,6 @@ function main()
     local -a list=(codeTemplate daemons driverLinux gitMonitor libShell makeDoc research researchD setupLinux shellScript shellTools)
     # Setup Libs
     logInit "$@" || return $?
-    logBegin
     libShellSetup -t 5
     # Internet connecton active intervals.
     local sleepTIME=$((60*30))
@@ -180,10 +178,6 @@ function main()
         sleep 1
         counter=$((counter-1))
     done
-
-    # Reset Libs
-    logEnd
-    logStop
 
     return 0
 }
