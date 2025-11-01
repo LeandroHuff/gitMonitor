@@ -3,13 +3,12 @@
 declare -a libLIST=(Config Conn EscCodes File Git Log Math Random Regex Shell String)
 declare -a libLOADED=()
 declare    libPATH="/var/home/$USER/dev/libShell"
-declare    DEBUG=0
 declare -i LEN=0
 declare -i INDEX=0
 declare -a ARGS=()
 
-function logFail() { echo -e "\033[31mfailure\033[0m: $*" ; }
-function logDebug() { [ $DEBUG -eq 0 ] || echo -e "\033[32m  debug\033[0m: $*" ; }
+function logFail()  { echo -e "\033[31mfailure\033[0m: $*" ; }
+function logDebug() { echo -e "\033[32m  debug\033[0m: $*" ; }
 
 function unsetVars()
 {
@@ -178,7 +177,7 @@ function main()
             logI 'Press [U] or [u] to start update.'
         fi
         printf -v string "Next Update: %4ds" ${counter}
-        logNLF "${string}"
+        logCRNLF "${string}"
         sleep 1
         counter=$((counter-1))
     done
@@ -210,7 +209,6 @@ do
         err=$?
         if [ $err -eq 0 ]
         then
-            logDebug "Load ${libPATH}/lib${libLIST[$INDEX]}.sh"
             libLOADED+=("${libLIST[$INDEX]}")
         else
             logFail "Load ${libPATH}/lib${libLIST[$INDEX]}.sh"
