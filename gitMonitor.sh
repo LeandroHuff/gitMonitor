@@ -8,7 +8,6 @@ declare -i INDEX=0
 declare -a ARGS=()
 
 function logFail()  { echo -e "\033[31mfailure\033[0m: $*" ; }
-function logDebug() { echo -e "\033[32m  debug\033[0m: $*" ; }
 
 function unsetVars()
 {
@@ -188,17 +187,6 @@ function main()
 
     return 0
 }
-
-declare -i LEN=$#
-declare -a ARGS=("$@")
-
-for ((INDEX=0 ; INDEX < LEN ; INDEX++))
-do
-    if [ "${ARGS[$INDEX]}" = '-g' ]
-    then
-        DEBUG=1
-    fi
-done
 
 # Load Libs
 LEN=${#libLIST[@]}
